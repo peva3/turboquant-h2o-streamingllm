@@ -1,0 +1,44 @@
+# CMake Optimization Patches for TurboQuant
+
+## Patch 1: Add Release Optimization Flags
+
+# In root CMakeLists.txt, add after line with CMAKE_BUILD_TYPE:
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "TurboQuant: Enabling release optimizations")
+    add_compile_options(-O3 -march=native -ftree-vectorize)
+    add_link_options(-O3)
+    
+    # Strip symbols in release mode
+    add_link_options(-s)
+    
+    # Enable LTO if available
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT lto_supported OUTPUT lto_output)
+    if(lto_supported)
+        message(STATUS "TurboQuant: LTO enabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+endif()
+
+## Patch 2: TurboQuant-Specific Optimizations
+
+# In src/turboquant/CMakeLists.txt:
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(
+        -O3
+        -march=native
+        -funroll-loops
+        -ffast-math
+    )
+endif()
+
+# CUDA-specific optimizations
+if(GGML_CUDA)
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} 
+        -O3
+        --use_fast_math
+        --ftz=true
+        --prec-div=false
+        --prec-sqrt=false
+    )
+endif()

@@ -12,6 +12,28 @@ if (NOT XCODE AND NOT MSVC AND NOT CMAKE_BUILD_TYPE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+
+# TurboQuant Release Optimizations
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    message(STATUS "TurboQuant: Enabling release optimizations (-O3 -march=native)")
+    if(NOT MSVC AND NOT EMSCRIPTEN)
+        add_compile_options(-O3 -march=native -ftree-vectorize)
+        add_link_options(-O3)
+        
+        # Strip symbols in Release mode only
+        if(CMAKE_BUILD_TYPE STREQUAL "Release")
+            add_link_options(-s)
+        endif()
+        
+        # Enable LTO if available
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT lto_supported OUTPUT lto_output)
+        if(lto_supported AND NOT GGML_CUDA)
+            message(STATUS "TurboQuant: LTO enabled")
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+        endif()
+    endif()
+endif()
 message("CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
 # Add path to modules
