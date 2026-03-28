@@ -1,4 +1,5 @@
 #include "turboquant_impl.h"
+#include "turboquant_simd.h"
 #include <cmath>
 #include <cstring>
 
@@ -42,16 +43,10 @@ std::vector<float> generate_random_rotation(int dim, int seed) {
     return Q;
 }
 
-// Apply rotation to vector
+// Apply rotation to vector (SIMD optimized)
 void apply_rotation(const std::vector<float>& Q, const float* input, float* output, int dim) {
-    for (int i = 0; i < dim; ++i) {
-        float val = 0.0f;
-        const float* Q_row = &Q[i * dim];
-        for (int j = 0; j < dim; ++j) {
-            val += Q_row[j] * input[j];
-        }
-        output[i] = val;
-    }
+    // Use SIMD-optimized version if available
+    simd::apply_rotation_auto(Q.data(), input, output, dim);
 }
 
 // Apply inverse rotation (transpose for orthogonal matrix)

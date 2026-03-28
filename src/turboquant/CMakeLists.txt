@@ -2,11 +2,11 @@
 
 add_library(turboquant
 turboquant_impl.h
-turboquant_impl.cpp
+turboquant_impl.cpp turboquant_simd.h turboquant_simd.cpp
 turboquant_op.h
 turboquant_op.cpp
 h2o_attention_accumulator.h
-h2o_attention_accumulator.cpp
+h2o_attention_accumulator.cpp turboquant_cuda_streams.h turboquant_cuda_streams.cpp
 )
 
 target_include_directories(turboquant PRIVATE
@@ -105,5 +105,13 @@ if (GGML_CUDA)
     
     if (BUILD_TESTS)
         add_test(NAME turboquant-cuda-test COMMAND test-turboquant-cuda)
+    endif()
+endif()
+
+# SIMD optimization flags
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # Enable AVX2 for SIMD optimizations
+    if(NOT MSVC)
+        add_compile_options(-mavx2 -mfma)
     endif()
 endif()
